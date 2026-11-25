@@ -30,10 +30,15 @@ const outFile = outDir.endsWith("entry.txt") ? outDir : join(outDir, "entry.txt"
 mkdirSync(join(outFile, ".."), { recursive: true });
 writeFileSync(outFile, line, "utf8");
 
-// Verify the written bytes match exactly (no trailing newline added).
+// Round-trip self-check (revision): re-read entry.txt and assert it is
+// byte-identical to the intended line — no trailing newline, no encoding
+// drift, no partial write.
 const written = readFileSync(outFile, "utf8");
 if (written !== line) {
   throw new Error("written entry.txt does not match the intended line");
+}
+if (Buffer.byteLength(written, "utf8") !== Buffer.byteLength(line, "utf8")) {
+  throw new Error("written entry.txt byte length does not match the intended line");
 }
 
 console.log(`Wrote ${outFile} (${chars} characters)`);
